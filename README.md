@@ -1,7 +1,8 @@
 # min-text-editor
 
+A write/darkroom-inspired minimalistic text editor for MacOS. This text editor handles pure plaintext in a completely minimalistic design.
+
 TODO:
-Text editor functionality (saving, reading)
-Help menu
-Change font size
-More themes
+- Help menu
+- Refactoring
+- More themes
