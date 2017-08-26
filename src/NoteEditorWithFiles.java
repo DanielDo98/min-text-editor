@@ -1,20 +1,16 @@
-import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Event;
 import java.awt.Font;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -23,17 +19,11 @@ import java.util.Scanner;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
-import javax.swing.ButtonGroup;
-import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.KeyStroke;
@@ -47,15 +37,21 @@ public class NoteEditorWithFiles extends JFrame {
     public static JScrollPane editorScrollPane = new JScrollPane();
     public static JTextArea control = new JTextArea();
     
-    public static int fontSize = 14;
-    public static String fontName = "Monospaced";
-    public static Color carotColor = new Color(0, 255, 0);
-    public static Color foreground = new Color(0, 255, 0);
-    public static Color background = new Color(0, 0, 0);
-    /*
-    public static Color foreground = new Color(9, 34, 19);
-    public static Color background = new Color(255, 244, 211);*/
+    final static String helpQuery = "Press ⌘-e for help";
+    final static String helpText = "⌘-n  New File"
+    		+ "        ⌘-o  Open File"
+    		+ "        ⌘-s  Save File"
+    		+ "        ⌘--  Decrease Text Size"
+    		+ "        ⌘-=  Increase Text Size"
+    		+ "        ⌘-[1, 4]  Themes"
+    		+ "        esc  Exit";
+    public static JLabel helpLabel = new JLabel(helpQuery);
     
+    
+    public static int fontSize = 14;
+    public static Theme[] themesUsed = {Theme.BASIC, Theme.MATRIX, Theme.SKY, Theme.HALL};
+    public static Theme currentTheme = themesUsed[0];
+
     public static double widthPercentage = .6;
     public static double heightPercentage = .92;
 
@@ -71,17 +67,12 @@ public class NoteEditorWithFiles extends JFrame {
         double width = widthPercentage * screenSize.getWidth();
         double height = heightPercentage * screenSize.getHeight();
         
-        getContentPane().setBackground(background);
+        //setUndecorated(true);
         getContentPane().setLayout(new GridBagLayout());
+        setTheme();
         
         GridBagConstraints cont = new GridBagConstraints();
-        cont.gridx = 0;
-        cont.gridy = 0;
         
-        control.setFont(new Font(fontName, Font.PLAIN, fontSize));
-        control.setForeground(foreground);
-        control.setBackground(background);
-        control.setCaretColor(carotColor);
         control.setLineWrap(true);
         control.setWrapStyleWord(true);
         control.setBorder(null);
@@ -90,8 +81,14 @@ public class NoteEditorWithFiles extends JFrame {
         editorScrollPane.setViewportView(control);
         editorScrollPane.getVerticalScrollBar().setPreferredSize(new Dimension(0, 0));
         editorScrollPane.setBorder(null);
-        editorScrollPane.setFont(new Font(fontName, Font.PLAIN, fontSize));
+        cont.gridx = 0;
+        cont.gridy = 0;
         getContentPane().add(editorScrollPane, cont);
+        
+        cont.gridx = 0;
+        cont.gridy = 1;
+        cont.insets = new Insets(20, 0, 0, 0);
+        getContentPane().add(helpLabel, cont);
         
         addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
@@ -142,7 +139,7 @@ public class NoteEditorWithFiles extends JFrame {
         Action fontIncrease = new AbstractAction() {
             public void actionPerformed(ActionEvent e) {
             	fontSize += fontSize <= 20 && fontSize >= 10 ? 1 : 2;
-            	fontPressed(fontName, fontSize);
+            	fontPressed(currentTheme, fontSize);
             }
         };
         control.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()),
@@ -153,7 +150,7 @@ public class NoteEditorWithFiles extends JFrame {
         Action fontDecrease = new AbstractAction() {
             public void actionPerformed(ActionEvent e) {
             	fontSize -= fontSize <= 20 ? 1 : 2;
-                fontPressed(fontName, fontSize);
+                fontPressed(currentTheme, fontSize);
             }
         };
         control.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()),
@@ -161,18 +158,39 @@ public class NoteEditorWithFiles extends JFrame {
         control.getActionMap().put("fontDecrease",
                                      fontDecrease);
         
-        /*
-        about.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                aboutPressed();
-            }
-        });*/
+        for (int i = 0; i < themesUsed.length; i++) {
+        	final int cur = i;
+        	Action setTheme = new AbstractAction() {
+                public void actionPerformed(ActionEvent e) {
+                	currentTheme = themesUsed[cur];
+                	setTheme();
+                }
+            };
+        	
+        	control.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(i + 49, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()), "setTheme" + i);
+        	control.getActionMap().put("setTheme" + i, setTheme);
+        }
         
+        Action help = new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+            	helpLabel.setText(helpText);
+            }
+        };
+        control.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke('E', Toolkit.getDefaultToolkit().getMenuShortcutKeyMask(), false), "help");
+        control.getActionMap().put("help", help);
+        
+        Action releaseHelp = new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+            	helpLabel.setText(helpQuery);
+            }
+        };
+        control.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke('E', Toolkit.getDefaultToolkit().getMenuShortcutKeyMask(), true), "releaseHelp");
+        control.getActionMap().put("releaseHelp", releaseHelp);
+
         GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
         gd.setFullScreenWindow(this);
-        //setUndecorated(true);
         
-        pack();
+        //pack();
         setLocationRelativeTo(null);
 
         setVisible(true);
@@ -182,15 +200,19 @@ public class NoteEditorWithFiles extends JFrame {
     	control.setText("");
     }
     
-    private void fontPressed(String newFont, int newSize) {
-    	control.setFont(new Font(newFont, Font.PLAIN, newSize));
+    private void setTheme() {
+    	getContentPane().setBackground(currentTheme.getBackground());
+    	control.setFont(new Font(currentTheme.getFontName(), Font.PLAIN, fontSize));
+        control.setForeground(currentTheme.getForeground());
+        control.setBackground(currentTheme.getBackground());
+        control.setCaretColor(currentTheme.getCarotColor());
+        
+        helpLabel.setFont(new Font(currentTheme.getFontName(), Font.PLAIN, 11));
+        helpLabel.setForeground(currentTheme.getForeground());
     }
     
-    private void aboutPressed() {
-        String message = "This is a note editor made by Daniel."
-                + "\nLast updated on 8/26/17";
-        JOptionPane.showConfirmDialog(null, message, "Information", JOptionPane.DEFAULT_OPTION,
-                JOptionPane.INFORMATION_MESSAGE);
+    private void fontPressed(Theme theme, int newSize) {
+    	control.setFont(new Font(theme.getFontName(), Font.PLAIN, newSize));
     }
     
     private void exitForm() {
