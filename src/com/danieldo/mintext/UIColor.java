@@ -1,3 +1,4 @@
+package com.danieldo.mintext;
 import java.awt.Color;
 
 public enum UIColor{
@@ -20,9 +21,4 @@ public enum UIColor{
 	public Color getColor() {
 		return color;
 	}
-
-	public void setColor(Color color) {
-		this.color = color;
-	}
-	
 }

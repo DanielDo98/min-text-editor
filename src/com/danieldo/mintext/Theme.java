@@ -1,3 +1,4 @@
+package com.danieldo.mintext;
 import java.awt.Color;
 
 public enum Theme {
@@ -17,29 +18,20 @@ public enum Theme {
 		 this.foreground = foreground;
 		 this.background = background;
 	 }
-	 
+
 	public String getFontName() {
 		return fontName;
 	}
-	public void setFontName(String fontName) {
-		this.fontName = fontName;
-	}
+
 	public Color getCarotColor() {
 		return carotColor;
 	}
-	public void setCarotColor(Color carotColor) {
-		this.carotColor = carotColor;
-	}
+
 	public Color getForeground() {
 		return foreground;
 	}
-	public void setForeground(Color foreground) {
-		this.foreground = foreground;
-	}
+
 	public Color getBackground() {
 		return background;
-	}
-	public void setBackground(Color background) {
-		this.background = background;
 	}
 }
