@@ -10,6 +10,7 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -27,16 +28,16 @@ import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.KeyStroke;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.text.BadLocationException;
 import javax.swing.undo.UndoManager;
 
-public class Main extends JFrame {
+public class MinText extends JFrame {
     
 	private static final long serialVersionUID = 9073550882218327707L;
 	
 	public final Theme[] themesUsed = {Theme.BASIC, Theme.MATRIX, Theme.SKY, Theme.HALL};
     public final int macMenu = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
+    public final GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()[0];
     public final String iconPath = "src/icon.png";
     public final double widthPercentage = .6;
     public final double heightPercentage = .92;
@@ -51,7 +52,7 @@ public class Main extends JFrame {
     		+ "        esc  Exit";
     
     public final JLabel helpLabel = new JLabel(helpQuery);
-    public final JFileChooser fileChoose = new JFileChooser();
+    private static JFileChooser fileChoose = new JFileChooser();
     public final JScrollPane editorScrollPane = new JScrollPane();
     public final JTextArea control = new JTextArea();
     
@@ -59,10 +60,10 @@ public class Main extends JFrame {
     private int themeNum = 0;
 
     public static void main(String[] args) {
-        new Main();
+        new MinText();
     }
  
-    public Main() {
+    public MinText() {
         setResizable(false);
         setTitle("MinText");
         
@@ -70,8 +71,8 @@ public class Main extends JFrame {
         createGUI();
         setKeyBindings();
         
-        GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
         gd.setFullScreenWindow(this);
+        
         setLocationRelativeTo(null);
         setVisible(true);
     }
@@ -171,7 +172,7 @@ public class Main extends JFrame {
     
     private void setIcon() {
     	try {
-    		setIconImage(ImageIO.read(Main.class.getClassLoader().getResourceAsStream("icon.png")));
+    		setIconImage(ImageIO.read(MinText.class.getClassLoader().getResourceAsStream("icon.png")));
         } catch (IOException e1) {
             e1.printStackTrace();
         }
@@ -214,8 +215,8 @@ public class Main extends JFrame {
     private void openFile() {
         fileChoose.setDialogType(JFileChooser.OPEN_DIALOG);
         fileChoose.setDialogTitle("Open file");
-        fileChoose.setAcceptAllFileFilterUsed(false);
-        fileChoose.addChoosableFileFilter(new FileNameExtensionFilter("Text files", "txt"));
+        
+        gd.setFullScreenWindow(null);
         if (fileChoose.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             try {
                 Scanner scan = new Scanner(fileChoose.getSelectedFile());
@@ -230,36 +231,39 @@ public class Main extends JFrame {
                         "Error reading", JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE);
             }
         }
+        gd.setFullScreenWindow(this);
     }
     
     private void saveFile() {
         fileChoose.setDialogType(JFileChooser.SAVE_DIALOG);
         fileChoose.setDialogTitle("Save file");
-        fileChoose.setAcceptAllFileFilterUsed(false);
-        fileChoose.addChoosableFileFilter(new FileNameExtensionFilter("Text files", "txt"));
         
-        if (fileChoose.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
-            String fileName = fileChoose.getSelectedFile().getName();
+        gd.setFullScreenWindow(null);
+        if (fileChoose.showSaveDialog(getContentPane()) == JFileChooser.APPROVE_OPTION) {
+        	File selectedFile = fileChoose.getSelectedFile();
+            String filePath = fileChoose.getSelectedFile().getAbsolutePath();
             
             if (fileChoose.getSelectedFile().exists()) {
-                int response = JOptionPane.showConfirmDialog(this, "Do you want to overwrite this file?",
+                int response = JOptionPane.showConfirmDialog(getContentPane(), "Do you want to overwrite this file?",
                         "Overwrite", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
                 if (response == JOptionPane.NO_OPTION) {
                     return;
                 }
                 
                 else if (response == JOptionPane.YES_OPTION){
-                    int indexOfDot = fileName.indexOf(".");
+                    int indexOfDot = filePath.indexOf(".");
                     if (indexOfDot == -1) {
-                        fileName += ".txt";
+                        selectedFile = new File(selectedFile + ".txt");
                     } else {
-                        fileName = fileName.substring(0, indexOfDot) + ".txt";
+                    	selectedFile = new File(filePath.substring(0, indexOfDot) + ".txt");
                     }
                 }
+            } else {
+            	selectedFile = new File(selectedFile + ".txt");
             }
             
             try {
-                PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(fileChoose.getSelectedFile())));
+                PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(selectedFile)));
                 for (int i = 0; i < control.getLineCount(); i++) {
                     try {
                         writer.println(control.getText().substring(control.getLineStartOffset(i), control.getLineEndOffset(i)));
@@ -274,5 +278,6 @@ public class Main extends JFrame {
                         JOptionPane.ERROR_MESSAGE);
             }
         }
+        gd.setFullScreenWindow(this);
     }
 }
